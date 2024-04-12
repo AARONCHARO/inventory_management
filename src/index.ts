@@ -10,6 +10,14 @@ class Item {
     description: string;
     quantity: number;
     createdAt: Date;
+
+    constructor(name: string, description: string, quantity: number) {
+        this.id = uuidv4();
+        this.name = name;
+        this.description = description;
+        this.quantity = quantity;
+        this.createdAt = getCurrentDate();
+    }
 }
 
 // Define the Supplier class to represent suppliers
@@ -19,6 +27,14 @@ class Supplier {
     contactInfo: string;
     itemsSuppliedIds: string[];
     createdAt: Date;
+
+    constructor(name: string, contactInfo: string) {
+        this.id = uuidv4();
+        this.name = name;
+        this.contactInfo = contactInfo;
+        this.itemsSuppliedIds = [];
+        this.createdAt = getCurrentDate();
+    }
 }
 
 // Define the Order class to represent inventory orders
@@ -28,6 +44,14 @@ class Order {
     quantity: number;
     orderDate: Date;
     supplierId: string;
+
+    constructor(itemId: string, quantity: number, supplierId: string) {
+        this.id = uuidv4();
+        this.itemId = itemId;
+        this.quantity = quantity;
+        this.orderDate = getCurrentDate();
+        this.supplierId = supplierId;
+    }
 }
 
 // Initialize stable maps for storing inventory items, suppliers, and orders
@@ -42,43 +66,33 @@ export default Server(() => {
 
     // Endpoint to create an inventory item
     app.post("/items", (req, res) => {
-        if (!req.body.name || !req.body.description || req.body.quantity === undefined) {
+        const { name, description, quantity } = req.body;
+        if (!name || !description || quantity === undefined) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const item: Item = {
-            id: uuidv4(),
-            createdAt: getCurrentDate(),
-            ...req.body,
-        };
+        const item = new Item(name, description, quantity);
         itemStorage.insert(item.id, item);
         res.json(item);
     });
 
     // Endpoint to create a supplier
     app.post("/suppliers", (req, res) => {
-        if (!req.body.name || !req.body.contactInfo) {
+        const { name, contactInfo } = req.body;
+        if (!name || !contactInfo) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const supplier: Supplier = {
-            id: uuidv4(),
-            createdAt: getCurrentDate(),
-            itemsSuppliedIds: [],
-            ...req.body,
-        };
+        const supplier = new Supplier(name, contactInfo);
         supplierStorage.insert(supplier.id, supplier);
         res.json(supplier);
     });
 
     // Endpoint to create an order
     app.post("/orders", (req, res) => {
-        if (!req.body.itemId || req.body.quantity === undefined || !req.body.supplierId) {
+        const { itemId, quantity, supplierId } = req.body;
+        if (!itemId || quantity === undefined || !supplierId) {
             return res.status(400).json({ message: "Missing required fields" });
         }
-        const order: Order = {
-            id: uuidv4(),
-            orderDate: getCurrentDate(),
-            ...req.body,
-        };
+        const order = new Order(itemId, quantity, supplierId);
         orderStorage.insert(order.id, order);
         res.json(order);
     });
@@ -89,6 +103,6 @@ export default Server(() => {
 
 // Function to get the current date
 function getCurrentDate() {
-    const timestamp = new Number(ic.time());
-    return new Date(timestamp.valueOf() / 1000_000);
+    const timestamp = ic.time();
+    return new Date(timestamp / 1000000);
 }
